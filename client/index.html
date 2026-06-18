@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeOS — Smart Daily Productivity Portal</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Background Animated Orbs -->
+  <div class="background-decor">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Main App Container -->
+  <div id="app">
+    
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen active">
+      <div class="auth-card">
+        <div class="auth-header">
+          <div class="app-logo">
+            <i class="fa-solid fa-circle-nodes logo-icon"></i>
+            <span>LifeOS</span>
+          </div>
+          <h1>Welcome to your portal</h1>
+          <p id="auth-subtitle">Organize, focus, and build consistency daily.</p>
+        </div>
+
+        <!-- Forms -->
+        <div class="auth-forms">
+          <!-- Login Form -->
+          <form id="login-form" class="auth-form active">
+            <div class="input-group">
+              <label for="login-username"><i class="fa-regular fa-user"></i> Username</label>
+              <input type="text" id="login-username" placeholder="Enter your username" required autocomplete="username">
+            </div>
+            <div class="input-group">
+              <label for="login-password"><i class="fa-solid fa-lock"></i> Password</label>
+              <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+              <span>Sign In</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+            <p class="auth-switch">Don't have an account? <span id="switch-to-signup">Sign Up</span></p>
+          </form>
+
+          <!-- Signup Form -->
+          <form id="signup-form" class="auth-form">
+            <div class="input-group">
+              <label for="signup-username"><i class="fa-regular fa-user"></i> Username</label>
+              <input type="text" id="signup-username" placeholder="Choose a username" required autocomplete="username">
+            </div>
+            <div class="input-group">
+              <label for="signup-password"><i class="fa-solid fa-lock"></i> Password</label>
+              <input type="password" id="signup-password" placeholder="Create a strong password" required autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+              <span>Create Account</span> <i class="fa-solid fa-user-plus"></i>
+            </button>
+            <p class="auth-switch">Already have an account? <span id="switch-to-login">Sign In</span></p>
+          </form>
+        </div>
+
+        <div id="auth-message" class="alert hidden"></div>
+      </div>
+    </div>
+
+    <!-- Main Workspace Screen (Hidden until Login) -->
+    <div id="main-screen" class="screen">
+      
+      <!-- App Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <div class="app-logo">
+            <i class="fa-solid fa-circle-nodes logo-icon"></i>
+            <span>LifeOS</span>
+          </div>
+          <nav class="main-nav">
+            <button class="nav-link active" data-target="dashboard"><i class="fa-solid fa-house"></i> <span>Dashboard</span></button>
+            <button class="nav-link" data-target="planner"><i class="fa-solid fa-list-check"></i> <span>Planner</span></button>
+            <button class="nav-link" data-target="timer"><i class="fa-solid fa-clock"></i> <span>Focus</span></button>
+            <button class="nav-link" data-target="habits"><i class="fa-solid fa-repeat"></i> <span>Habits</span></button>
+            <button class="nav-link" data-target="meals"><i class="fa-solid fa-utensils"></i> <span>Meals</span></button>
+            <button class="nav-link" data-target="mood"><i class="fa-solid fa-face-smile"></i> <span>Mood</span></button>
+          </nav>
+        </div>
+        <div class="header-right">
+          <button id="theme-toggle" class="theme-btn" aria-label="Toggle Theme">
+            <i class="fa-solid fa-sun icon-sun"></i>
+            <i class="fa-solid fa-moon icon-moon"></i>
+          </button>
+          <div class="user-menu">
+            <div class="user-avatar" id="user-avatar">
+              <i class="fa-solid fa-user-ninja"></i>
+            </div>
+            <span class="username-display" id="user-display">Loading...</span>
+            <button id="logout-btn" class="logout-btn" title="Sign Out"><i class="fa-solid fa-right-from-bracket"></i></button>
+          </div>
+        </div>
+      </header>
+
+      <!-- App Content Area -->
+      <main class="app-content">
+
+        <!-- DASHBOARD TAB -->
+        <section id="tab-dashboard" class="tab-pane active">
+          <div class="welcome-banner">
+            <div>
+              <h2 class="welcome-heading">Hello, <span class="user-greeting" id="welcome-username">User</span>!</h2>
+              <p>Ready to own your day? Here's an overview of your productivity today.</p>
+            </div>
+            <div class="date-widget" id="dashboard-date">June 18, 2026</div>
+          </div>
+
+          <!-- Stats Row -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon icon-tasks"><i class="fa-solid fa-list-check"></i></div>
+              <div class="stat-details">
+                <span class="stat-label">Planner Progress</span>
+                <h3 class="stat-value" id="stat-tasks-progress">0%</h3>
+                <div class="progress-bar-container">
+                  <div class="progress-bar" id="stat-tasks-bar" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon icon-focus"><i class="fa-solid fa-clock"></i></div>
+              <div class="stat-details">
+                <span class="stat-label">Focus State</span>
+                <h3 class="stat-value" id="stat-timer-mode">Idle</h3>
+                <span class="stat-desc" id="stat-timer-time">25:00</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon icon-habits"><i class="fa-solid fa-fire"></i></div>
+              <div class="stat-details">
+                <span class="stat-label">Best Streak</span>
+                <h3 class="stat-value" id="stat-habits-streak">0 days</h3>
+                <span class="stat-desc" id="stat-habits-count">0 active habits</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon icon-mood"><i class="fa-solid fa-face-smile"></i></div>
+              <div class="stat-details">
+                <span class="stat-label">Today's Mood</span>
+                <h3 class="stat-value" id="stat-mood-display">Not Logged</h3>
+                <span class="stat-desc" id="stat-mood-quote">A clean slate awaits.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard Grid -->
+          <div class="dashboard-grid">
+            
+            <!-- Quick Planner Widget -->
+            <div class="dash-widget card">
+              <div class="widget-header">
+                <h3><i class="fa-solid fa-list-check"></i> Today's Key Tasks</h3>
+                <button class="widget-action-btn view-tab-btn" data-target="planner">Go to Planner</button>
+              </div>
+              <div class="widget-body">
+                <ul class="task-list-summary" id="dash-tasks-list">
+                  <li class="empty-state">No tasks for today. Add some to get started!</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Quick Habits Widget -->
+            <div class="dash-widget card">
+              <div class="widget-header">
+                <h3><i class="fa-solid fa-repeat"></i> Daily Habits Tracker</h3>
+                <button class="widget-action-btn view-tab-btn" data-target="habits">Manage Habits</button>
+              </div>
+              <div class="widget-body">
+                <div class="habit-quick-grid" id="dash-habits-list">
+                  <div class="empty-state">No habits tracked yet. Create one!</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pomodoro Quick Widget -->
+            <div class="dash-widget card focus-widget">
+              <div class="widget-header">
+                <h3><i class="fa-solid fa-clock"></i> Focus Timer</h3>
+                <button class="widget-action-btn view-tab-btn" data-target="timer">Expand Timer</button>
+              </div>
+              <div class="widget-body focus-widget-body">
+                <div class="mini-timer-display">
+                  <span id="mini-timer-time">25:00</span>
+                  <span id="mini-timer-label">Focus</span>
+                </div>
+                <div class="mini-timer-controls">
+                  <button id="mini-timer-toggle-btn" class="btn btn-icon-round btn-primary" title="Start/Pause"><i class="fa-solid fa-play"></i></button>
+                  <button id="mini-timer-reset-btn" class="btn btn-icon-round btn-secondary" title="Reset"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Meal Suggester Widget -->
+            <div class="dash-widget card">
+              <div class="widget-header">
+                <h3><i class="fa-solid fa-utensils"></i> Quick Meal Decider</h3>
+                <button class="widget-action-btn view-tab-btn" data-target="meals">See All</button>
+              </div>
+              <div class="widget-body meal-widget-body">
+                <div class="mini-meal-card" id="mini-meal-suggestion">
+                  <p class="meal-placeholder">Need a food suggestion? Click below to pick a category and roll!</p>
+                </div>
+                <div class="mini-meal-actions">
+                  <button class="btn btn-sm btn-secondary quick-meal-roll" data-category="healthy">Healthy</button>
+                  <button class="btn btn-sm btn-secondary quick-meal-roll" data-category="quick">Quick</button>
+                  <button class="btn btn-sm btn-secondary quick-meal-roll" data-category="budget">Budget</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- PLANNER TAB -->
+        <section id="tab-planner" class="tab-pane">
+          <div class="section-header">
+            <div>
+              <h2>Daily Task Planner</h2>
+              <p>Organize, prioritize, and check off your daily agenda.</p>
+            </div>
+            <div class="planner-summary">
+              <span class="summary-text"><strong id="planner-completed-count">0</strong> of <strong id="planner-total-count">0</strong> completed</span>
+              <div class="progress-ring-wrap">
+                <svg class="progress-ring" width="40" height="40">
+                  <circle class="progress-ring-circle-bg" stroke="var(--border-color)" stroke-width="4" fill="transparent" r="16" cx="20" cy="20"/>
+                  <circle class="progress-ring-circle" id="planner-progress-ring" stroke="var(--primary-color)" stroke-width="4" fill="transparent" r="16" cx="20" cy="20"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="planner-layout">
+            <!-- Left Side: Task Form -->
+            <div class="planner-form-card card">
+              <h3>Create New Task</h3>
+              <form id="task-form">
+                <div class="input-group">
+                  <label for="task-title">Task Description</label>
+                  <input type="text" id="task-title" placeholder="What needs to be done?" required autocomplete="off">
+                </div>
+                <div class="input-row">
+                  <div class="input-group">
+                    <label for="task-priority">Priority</label>
+                    <select id="task-priority">
+                      <option value="low">🟢 Low</option>
+                      <option value="medium" selected>🟡 Medium</option>
+                      <option value="high">🔴 High</option>
+                    </select>
+                  </div>
+                  <div class="input-group">
+                    <label for="task-due-date">Due Date</label>
+                    <input type="date" id="task-due-date">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-plus"></i> Add Task</button>
+              </form>
+            </div>
+
+            <!-- Right Side: Task Lists -->
+            <div class="planner-list-container">
+              <div class="list-filters-bar">
+                <div class="search-wrap">
+                  <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                  <input type="text" id="task-search" placeholder="Search tasks...">
+                </div>
+                <div class="filter-buttons">
+                  <button class="filter-btn active" data-filter="all">All</button>
+                  <button class="filter-btn" data-filter="active">Active</button>
+                  <button class="filter-btn" data-filter="completed">Completed</button>
+                </div>
+              </div>
+
+              <div class="tasks-card card">
+                <ul id="tasks-list" class="tasks-list">
+                  <!-- Dynamic Tasks Load Here -->
+                  <li class="empty-state">Loading tasks...</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- FOCUS TIMER TAB -->
+        <section id="tab-timer" class="tab-pane">
+          <div class="section-header">
+            <div>
+              <h2>Focus Timer</h2>
+              <p>Use the Pomodoro technique to boost your deep work sessions.</p>
+            </div>
+          </div>
+
+          <div class="timer-container card">
+            <div class="timer-modes">
+              <button class="timer-mode-btn active" data-mode="focus" data-time="1500">Focus Session (25m)</button>
+              <button class="timer-mode-btn" data-mode="short-break" data-time="300">Short Break (5m)</button>
+              <button class="timer-mode-btn" data-mode="long-break" data-time="900">Long Break (15m)</button>
+            </div>
+
+            <!-- SVG Timer Circle -->
+            <div class="timer-display-wrap">
+              <svg class="timer-circle-svg" width="280" height="280" viewBox="0 0 280 280">
+                <circle class="timer-circle-bg" cx="140" cy="140" r="120" stroke-width="8" fill="transparent"/>
+                <circle class="timer-circle-progress" id="timer-progress-ring" cx="140" cy="140" r="120" stroke-width="10" fill="transparent"/>
+              </svg>
+              <div class="timer-time-overlay">
+                <h1 id="timer-time">25:00</h1>
+                <span id="timer-status">Get Ready!</span>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="timer-controls">
+              <button id="timer-toggle-btn" class="btn btn-lg btn-primary btn-round-lg"><i class="fa-solid fa-play"></i> Start Session</button>
+              <button id="timer-reset-btn" class="btn btn-lg btn-secondary btn-round-lg"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+            </div>
+
+            <div class="timer-settings">
+              <div class="toggle-control">
+                <label for="timer-audio-toggle">Sound Alerts</label>
+                <input type="checkbox" id="timer-audio-toggle" checked>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- HABIT TRACKER TAB -->
+        <section id="tab-habits" class="tab-pane">
+          <div class="section-header">
+            <div>
+              <h2>Habit Consistency Tracker</h2>
+              <p>Form positive habits by checking them off day by day.</p>
+            </div>
+          </div>
+
+          <div class="habits-layout">
+            <!-- Form Card -->
+            <div class="habit-form-card card">
+              <h3>Track a New Habit</h3>
+              <p class="card-subtitle">Consistency leads to growth. Start tiny!</p>
+              <form id="habit-form">
+                <div class="input-group">
+                  <label for="habit-name">Habit Name</label>
+                  <input type="text" id="habit-name" placeholder="e.g. Read 10 Pages, Meditate, Drink Water" required autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-plus"></i> Create Habit</button>
+              </form>
+            </div>
+
+            <!-- Habits Grid Card -->
+            <div class="habits-list-card card">
+              <div class="habits-grid-header">
+                <div class="habit-col-name">Habit</div>
+                <div class="habit-col-week">
+                  <!-- Weekly Headers -->
+                  <div class="day-hdr" id="day-hdr-0">Mon</div>
+                  <div class="day-hdr" id="day-hdr-1">Tue</div>
+                  <div class="day-hdr" id="day-hdr-2">Wed</div>
+                  <div class="day-hdr" id="day-hdr-3">Thu</div>
+                  <div class="day-hdr" id="day-hdr-4">Fri</div>
+                  <div class="day-hdr" id="day-hdr-5">Sat</div>
+                  <div class="day-hdr" id="day-hdr-6">Sun</div>
+                </div>
+                <div class="habit-col-streak"><i class="fa-solid fa-fire"></i> Streak</div>
+                <div class="habit-col-action"></div>
+              </div>
+              
+              <div class="habits-rows-container" id="habits-list">
+                <!-- Habits render dynamically here -->
+                <div class="empty-state">No habits created yet. Track one to start building consistency!</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- MEAL SUGGESTER TAB -->
+        <section id="tab-meals" class="tab-pane">
+          <div class="section-header">
+            <div>
+              <h2>Meal Suggestion Tool</h2>
+              <p>Eliminate decision fatigue and find quick meal recommendations instantly.</p>
+            </div>
+          </div>
+
+          <div class="meals-layout">
+            <!-- Controls Card -->
+            <div class="meals-filter-card card">
+              <h3>What are you craving?</h3>
+              <p class="card-subtitle">Select a category below to generate ideas.</p>
+              
+              <div class="meal-categories">
+                <button class="meal-cat-btn active" data-category="all">
+                  <i class="fa-solid fa-border-all"></i>
+                  <span>Anything</span>
+                </button>
+                <button class="meal-cat-btn" data-category="healthy">
+                  <i class="fa-solid fa-apple-whole"></i>
+                  <span>Healthy</span>
+                </button>
+                <button class="meal-cat-btn" data-category="quick">
+                  <i class="fa-solid fa-bolt"></i>
+                  <span>Quick & Easy</span>
+                </button>
+                <button class="meal-cat-btn" data-category="budget">
+                  <i class="fa-solid fa-wallet"></i>
+                  <span>Budget-Friendly</span>
+                </button>
+              </div>
+
+              <button id="roll-meal-btn" class="btn btn-primary btn-block btn-lg roll-btn">
+                <i class="fa-solid fa-dice"></i> <span>Roll the Dice!</span>
+              </button>
+            </div>
+
+            <!-- Suggestion Display Card -->
+            <div class="meal-result-card card">
+              <div class="meal-card-inner" id="meal-suggestion-card">
+                <!-- Initial State -->
+                <div class="meal-card-front">
+                  <div class="meal-dice-icon"><i class="fa-solid fa-dice-d20"></i></div>
+                  <h3>Ready to decide?</h3>
+                  <p>Choose a category on the left and hit Roll to get a delicious recommendation!</p>
+                </div>
+                
+                <!-- Dynamic Content State (Will be injected by JS) -->
+                <div class="meal-card-content hidden">
+                  <span class="meal-badge" id="meal-badge">Healthy</span>
+                  <h3 class="meal-title" id="meal-name">Quinoa Salad with Chickpeas</h3>
+                  <div class="meal-meta">
+                    <span class="meal-time"><i class="fa-regular fa-clock"></i> <span id="meal-time-val">15 mins</span></span>
+                  </div>
+                  
+                  <div class="meal-details-section">
+                    <h4>Ingredients:</h4>
+                    <ul class="meal-ingredients-list" id="meal-ingredients">
+                      <li>Quinoa</li>
+                      <li>Chickpeas</li>
+                    </ul>
+                    
+                    <h4>Instructions:</h4>
+                    <p class="meal-instructions-text" id="meal-instructions">Instructions text here...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- MOOD LOG TAB -->
+        <section id="tab-mood" class="tab-pane">
+          <div class="section-header">
+            <div>
+              <h2>Mood & Motivation</h2>
+              <p>Log your daily emotional state, reflect on your thoughts, and find focus.</p>
+            </div>
+          </div>
+
+          <div class="mood-layout">
+            <!-- Mood Logger -->
+            <div class="mood-log-card card">
+              <h3>How are you feeling today?</h3>
+              <p class="card-subtitle">Logging your mood regularly increases self-awareness.</p>
+              
+              <form id="mood-form">
+                <div class="mood-selector">
+                  <label class="mood-emoji-label" data-rating="1">
+                    <input type="radio" name="mood-rating" value="1" required>
+                    <div class="mood-emoji-box">
+                      <span class="emoji">😢</span>
+                      <span class="label">Low</span>
+                    </div>
+                  </label>
+                  <label class="mood-emoji-label" data-rating="2">
+                    <input type="radio" name="mood-rating" value="2">
+                    <div class="mood-emoji-box">
+                      <span class="emoji">😔</span>
+                      <span class="label">Down</span>
+                    </div>
+                  </label>
+                  <label class="mood-emoji-label" data-rating="3">
+                    <input type="radio" name="mood-rating" value="3" checked>
+                    <div class="mood-emoji-box">
+                      <span class="emoji">😐</span>
+                      <span class="label">Okay</span>
+                    </div>
+                  </label>
+                  <label class="mood-emoji-label" data-rating="4">
+                    <input type="radio" name="mood-rating" value="4">
+                    <div class="mood-emoji-box">
+                      <span class="emoji">🙂</span>
+                      <span class="label">Good</span>
+                    </div>
+                  </label>
+                  <label class="mood-emoji-label" data-rating="5">
+                    <input type="radio" name="mood-rating" value="5">
+                    <div class="mood-emoji-box">
+                      <span class="emoji">🤩</span>
+                      <span class="label">Great</span>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="input-group mt-4">
+                  <label for="mood-notes">Daily Reflection / Journal Notes (Optional)</label>
+                  <textarea id="mood-notes" rows="4" placeholder="What's on your mind? What went well today? What can be improved?"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-check"></i> Save Daily Log</button>
+              </form>
+            </div>
+
+            <!-- Quotes and History -->
+            <div class="mood-feedback-container">
+              <!-- Dynamic Motivational Quote -->
+              <div class="quote-card card" id="mood-quote-card">
+                <div class="quote-icon"><i class="fa-solid fa-quote-left"></i></div>
+                <blockquote class="motivational-quote" id="motivational-quote">
+                  "Consistency is not about perfection. It is about showing up even when you don't feel like it."
+                </blockquote>
+                <cite class="quote-author" id="quote-author">— Daily Inspiration</cite>
+              </div>
+
+              <!-- History Logs -->
+              <div class="mood-history-card card">
+                <h3>Mood Log History</h3>
+                <div class="mood-history-list" id="mood-history-list">
+                  <!-- Injected dynamically -->
+                  <div class="empty-state">No mood logs saved yet. Save today's log to see your history!</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- Audio elements for Pomodoro alerts -->
+  <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav" preload="auto"></audio>
+
+  <!-- JavaScript imports -->
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/planner.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/habits.js"></script>
+  <script src="js/meals.js"></script>
+  <script src="js/mood.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
