@@ -29,11 +29,15 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`=========================================`);
-  console.log(` LifeOS Server running on port ${PORT}`);
-  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(` Database: ${db.isMongo ? 'MongoDB Atlas' : 'Local JSON Database'}`);
-  console.log(` Access URL: http://localhost:${PORT}`);
-  console.log(`=========================================`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`=========================================`);
+    console.log(` LifeOS Server running on port ${PORT}`);
+    console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(` Database: ${db.isMongo ? 'MongoDB Atlas' : 'Local JSON Database'}`);
+    console.log(` Access URL: http://localhost:${PORT}`);
+    console.log(`=========================================`);
+  });
+}
+
+module.exports = app;
