@@ -5,5 +5,12 @@
     "password": "$2a$10$nwlzW3Ij/6xKMvwaruH0A.nqtt9A4GE81wMrxw8utgTI7y.9Ng.7a",
     "createdAt": "2026-06-18T05:36:49.503Z",
     "updatedAt": "2026-06-18T05:36:49.507Z"
+  },
+  {
+    "_id": "ji5i3pvuzv4tqa8jsye46",
+    "username": "testuser123",
+    "password": "$2a$10$5tDaXYfXM6RrAhrttLplte9exGIAwcylmPASroianPUCTv9Zq7Piq",
+    "createdAt": "2026-06-19T04:17:46.370Z",
+    "updatedAt": "2026-06-19T04:17:46.371Z"
   }
 ]

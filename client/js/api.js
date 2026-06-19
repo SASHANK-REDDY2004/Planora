@@ -43,7 +43,17 @@ const API = {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+
+      // Safely parse JSON — avoid crash if response is empty or HTML
+      let data = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : {};
+      } else {
+        // Non-JSON response (e.g. HTML error page or empty body)
+        data = {};
+      }
 
       if (!response.ok) {
         // If unauthorized, clear token and redirect/reset
@@ -51,11 +61,15 @@ const API = {
           this.clearToken();
           window.location.reload(); // Boot user out to login screen
         }
-        throw new Error(data.message || 'Something went wrong');
+        throw new Error(data.message || `Server error (${response.status}). Is the server running?`);
       }
 
       return data;
     } catch (error) {
+      // Network error or server is completely down
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Cannot connect to server. Please make sure the server is running.');
+      }
       console.error(`API Request Error [${endpoint}]:`, error);
       throw error;
     }

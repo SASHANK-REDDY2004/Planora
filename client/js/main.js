@@ -91,10 +91,11 @@ const MainApp = {
   // Auth Callbacks
   onLogin(user) {
     this.currentUser = user;
-    
-    // Update header name display
-    document.getElementById('user-display').textContent = user.username;
-    document.getElementById('welcome-username').textContent = user.username;
+
+    // Show displayName if set, otherwise fall back to username
+    const label = user.displayName || user.username;
+    document.getElementById('user-display').textContent = label;
+    document.getElementById('welcome-username').textContent = label;
 
     // Initialize all app modules
     Planner.init();
@@ -107,22 +108,26 @@ const MainApp = {
     this.loadAllData();
   },
 
+  updateDisplayName(name) {
+    if (!name) return;
+    if (this.currentUser) this.currentUser.displayName = name;
+    const label = name;
+    const el1 = document.getElementById('user-display');
+    const el2 = document.getElementById('welcome-username');
+    if (el1) el1.textContent = label;
+    if (el2) el2.textContent = label;
+  },
+
   onLogout() {
     this.currentUser = null;
     document.title = "LifeOS — Smart Daily Productivity Portal";
   },
 
   loadAllData() {
-    // Concurrent fetch requests for speed
-    Promise.all([
-      Planner.loadTasks(),
-      Habits.loadHabits(),
-      Mood.loadMoodLogs()
-    ]).then(() => {
-      this.updateStats();
-    }).catch(err => {
-      console.error('Error loading initial portal data:', err);
-    });
+    Planner.loadTasks();
+    Habits.loadHabits();
+    Mood.loadMoodLogs();
+    this.updateStats();
   },
 
   // Aggregate stats across modules and update overview screen

@@ -1,40 +1,48 @@
-// LifeOS Authentication Handler
+// LifeOS Authentication Handler — localStorage powered (no server required)
 
 const Auth = {
   init() {
-    this.loginForm = document.getElementById('login-form');
-    this.signupForm = document.getElementById('signup-form');
-    this.authScreen = document.getElementById('auth-screen');
-    this.mainScreen = document.getElementById('main-screen');
-    this.authMsg = document.getElementById('auth-message');
-    
+    this.loginForm    = document.getElementById('login-form');
+    this.signupForm   = document.getElementById('signup-form');
+    this.authScreen   = document.getElementById('auth-screen');
+    this.mainScreen   = document.getElementById('main-screen');
+    this.authMsg      = document.getElementById('auth-message');
+
+    this.profileOverlay  = document.getElementById('profile-setup-overlay');
+    this.profileForm     = document.getElementById('profile-setup-form');
+    this.profileNameInput = document.getElementById('profile-name-input');
+    this.profileSkipBtn  = document.getElementById('profile-skip-btn');
+
     this.switchToSignup = document.getElementById('switch-to-signup');
-    this.switchToLogin = document.getElementById('switch-to-login');
-    this.logoutBtn = document.getElementById('logout-btn');
+    this.switchToLogin  = document.getElementById('switch-to-login');
+    this.logoutBtn      = document.getElementById('logout-btn');
 
     this.bindEvents();
   },
 
   bindEvents() {
-    // Switch between Forms
     if (this.switchToSignup) {
       this.switchToSignup.addEventListener('click', () => this.toggleForm('signup'));
     }
     if (this.switchToLogin) {
       this.switchToLogin.addEventListener('click', () => this.toggleForm('login'));
     }
-
-    // Form Submissions
     if (this.loginForm) {
       this.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
     }
     if (this.signupForm) {
       this.signupForm.addEventListener('submit', (e) => this.handleSignup(e));
     }
-
-    // Logout Action
     if (this.logoutBtn) {
       this.logoutBtn.addEventListener('click', () => this.logout());
+    }
+
+    // Profile setup form
+    if (this.profileForm) {
+      this.profileForm.addEventListener('submit', (e) => this.handleProfileSetup(e));
+    }
+    if (this.profileSkipBtn) {
+      this.profileSkipBtn.addEventListener('click', () => this.closeProfileOverlay());
     }
   },
 
@@ -75,14 +83,13 @@ const Auth = {
     }
 
     try {
-      const data = await API.post('/auth/login', { username, password });
-      API.setToken(data.token);
-      this.showMessage('Success! Entering portal...', 'success');
-      
-      // Delay transition for smooth visual feedback
+      const user = await LocalDB.Users.authenticate(username, password);
+      LocalDB.Session.set(user);
+      this.showMessage('Welcome back! Entering portal...', 'success');
+
       setTimeout(() => {
-        this.loginSuccess(data.user);
-      }, 1000);
+        this.loginSuccess({ id: user._id, username: user.username, displayName: user.displayName, email: user.email });
+      }, 900);
     } catch (err) {
       this.showMessage(err.message || 'Login failed. Check your credentials.');
     }
@@ -93,23 +100,32 @@ const Auth = {
     this.hideMessage();
 
     const username = document.getElementById('signup-username').value.trim();
+    const email    = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
 
-    if (!username || password.length < 6) {
+    if (!username) {
+      this.showMessage('Please enter a username.');
+      return;
+    }
+    if (!email) {
+      this.showMessage('Please enter your email address.');
+      return;
+    }
+    if (password.length < 6) {
       this.showMessage('Password must be at least 6 characters long.');
       return;
     }
 
     try {
-      const data = await API.post('/auth/register', { username, password });
-      API.setToken(data.token);
-      this.showMessage('Account created successfully! Redirecting...', 'success');
+      const user = await LocalDB.Users.create(username, email, password);
+      LocalDB.Session.set(user);
+      this.showMessage('Account created! Entering portal...', 'success');
 
       setTimeout(() => {
-        this.loginSuccess(data.user);
-      }, 1000);
+        this.loginSuccess({ id: user._id, username: user.username, displayName: user.displayName, email: user.email });
+      }, 900);
     } catch (err) {
-      this.showMessage(err.message || 'Registration failed. Username may be taken.');
+      this.showMessage(err.message || 'Registration failed. Try a different username.');
     }
   },
 
@@ -117,30 +133,77 @@ const Auth = {
     this.loginForm.reset();
     this.signupForm.reset();
     this.hideMessage();
-    
-    // Hide auth screen and show main application workspace
+
     this.authScreen.classList.remove('active');
     this.mainScreen.classList.add('active');
 
-    // Notify Main App coordinator
     if (window.MainApp && typeof window.MainApp.onLogin === 'function') {
       window.MainApp.onLogin(user);
     }
+
+    // Show name-collection overlay if displayName not yet set
+    if (!user.displayName) {
+      setTimeout(() => this.showProfileOverlay(), 400);
+    }
   },
 
-  async checkSession() {
-    if (API.isAuthenticated()) {
-      try {
-        const user = await API.get('/auth/me');
-        this.loginSuccess(user);
-      } catch (err) {
-        console.error('Session validation failed:', err);
-        API.clearToken();
-        this.showLoginScreen();
-      }
-    } else {
-      this.showLoginScreen();
+  // ── Profile name collection overlay ────────────────────────────────────────
+  showProfileOverlay() {
+    if (this.profileOverlay) {
+      this.profileOverlay.classList.remove('hidden');
+      // Focus the input after animation
+      setTimeout(() => {
+        if (this.profileNameInput) this.profileNameInput.focus();
+      }, 300);
     }
+  },
+
+  closeProfileOverlay(displayName = '') {
+    if (this.profileOverlay) {
+      this.profileOverlay.classList.add('profile-overlay-hide');
+      setTimeout(() => {
+        this.profileOverlay.classList.add('hidden');
+        this.profileOverlay.classList.remove('profile-overlay-hide');
+      }, 400);
+    }
+
+    if (displayName && window.MainApp) {
+      window.MainApp.updateDisplayName(displayName);
+    }
+  },
+
+  handleProfileSetup(e) {
+    e.preventDefault();
+    const name = this.profileNameInput ? this.profileNameInput.value.trim() : '';
+
+    if (!name) {
+      this.profileNameInput.classList.add('shake');
+      setTimeout(() => this.profileNameInput.classList.remove('shake'), 500);
+      return;
+    }
+
+    // Save the name to LocalDB and session
+    const session = LocalDB.Session.get();
+    if (session) {
+      LocalDB.Users.updateName(session.id, name);
+      LocalDB.Session.updateDisplayName(name);
+    }
+
+    this.closeProfileOverlay(name);
+  },
+
+  checkSession() {
+    const session = LocalDB.Session.get();
+    if (session) {
+      const user = LocalDB.Users.findById(session.id);
+      if (user) {
+        this.loginSuccess({ id: user._id, username: user.username, displayName: user.displayName, email: user.email });
+        return;
+      } else {
+        LocalDB.Session.clear();
+      }
+    }
+    this.showLoginScreen();
   },
 
   showLoginScreen() {
@@ -149,7 +212,7 @@ const Auth = {
   },
 
   logout() {
-    API.clearToken();
+    LocalDB.Session.clear();
     if (window.MainApp && typeof window.MainApp.onLogout === 'function') {
       window.MainApp.onLogout();
     }
@@ -158,5 +221,4 @@ const Auth = {
   }
 };
 
-// Bind to window to allow global coordination
 window.Auth = Auth;

@@ -1,19 +1,23 @@
-// LifeOS Daily Planner Handler
+// LifeOS Daily Planner Handler — localStorage powered
 
 const Planner = {
   tasks: [],
   currentFilter: 'all',
   searchQuery: '',
 
+  _userId() {
+    return LocalDB.Session.get()?.id;
+  },
+
   init() {
-    this.taskForm = document.getElementById('task-form');
-    this.tasksList = document.getElementById('tasks-list');
+    this.taskForm     = document.getElementById('task-form');
+    this.tasksList    = document.getElementById('tasks-list');
     this.dashTasksList = document.getElementById('dash-tasks-list');
     
-    this.searchBar = document.getElementById('task-search');
-    this.filterBtns = document.querySelectorAll('.filter-btn');
+    this.searchBar    = document.getElementById('task-search');
+    this.filterBtns   = document.querySelectorAll('.filter-btn');
     
-    this.compCountEl = document.getElementById('planner-completed-count');
+    this.compCountEl  = document.getElementById('planner-completed-count');
     this.totalCountEl = document.getElementById('planner-total-count');
     this.progressRing = document.getElementById('planner-progress-ring');
 
@@ -24,14 +28,12 @@ const Planner = {
     if (this.taskForm) {
       this.taskForm.addEventListener('submit', (e) => this.handleAddTask(e));
     }
-
     if (this.searchBar) {
       this.searchBar.addEventListener('input', (e) => {
         this.searchQuery = e.target.value.toLowerCase();
         this.render();
       });
     }
-
     this.filterBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         this.filterBtns.forEach(b => b.classList.remove('active'));
@@ -42,143 +44,105 @@ const Planner = {
     });
   },
 
-  async loadTasks() {
-    try {
-      this.tasks = await API.get('/tasks');
-      this.render();
-    } catch (err) {
-      console.error('Failed to load tasks:', err);
-    }
+  loadTasks() {
+    this.tasks = LocalDB.Tasks.getAll(this._userId());
+    this.render();
   },
 
-  async handleAddTask(e) {
+  handleAddTask(e) {
     e.preventDefault();
-    const titleInput = document.getElementById('task-title');
+    const titleInput    = document.getElementById('task-title');
     const prioritySelect = document.getElementById('task-priority');
-    const dueDateInput = document.getElementById('task-due-date');
+    const dueDateInput  = document.getElementById('task-due-date');
 
-    const title = titleInput.value.trim();
+    const title    = titleInput.value.trim();
     const priority = prioritySelect.value;
-    const dueDate = dueDateInput.value;
+    const dueDate  = dueDateInput.value;
 
     if (!title) return;
 
-    try {
-      const newTask = await API.post('/tasks', { title, priority, dueDate });
-      this.tasks.push(newTask);
-      titleInput.value = '';
-      dueDateInput.value = '';
-      prioritySelect.value = 'medium';
-      
-      this.render();
-      
-      // Update general app dashboard stats
-      if (window.MainApp) window.MainApp.updateStats();
-    } catch (err) {
-      console.error('Failed to add task:', err);
-    }
+    const newTask = LocalDB.Tasks.create(this._userId(), { title, priority, dueDate });
+    this.tasks.push(newTask);
+
+    titleInput.value   = '';
+    dueDateInput.value = '';
+    prioritySelect.value = 'medium';
+
+    this.render();
+    if (window.MainApp) window.MainApp.updateStats();
   },
 
-  async toggleTask(id, completed) {
-    try {
-      const updated = await API.put(`/tasks/${id}`, { completed });
-      this.tasks = this.tasks.map(t => t._id === id ? updated : t);
-      this.render();
-      
-      if (window.MainApp) window.MainApp.updateStats();
-    } catch (err) {
-      console.error('Failed to toggle task:', err);
-    }
+  toggleTask(id, completed) {
+    const updated = LocalDB.Tasks.update(this._userId(), id, { completed });
+    this.tasks = this.tasks.map(t => t._id === id ? updated : t);
+    this.render();
+    if (window.MainApp) window.MainApp.updateStats();
   },
 
-  async deleteTask(id) {
-    try {
-      await API.delete(`/tasks/${id}`);
-      this.tasks = this.tasks.filter(t => t._id !== id);
-      this.render();
-      
-      if (window.MainApp) window.MainApp.updateStats();
-    } catch (err) {
-      console.error('Failed to delete task:', err);
-    }
+  deleteTask(id) {
+    LocalDB.Tasks.delete(this._userId(), id);
+    this.tasks = this.tasks.filter(t => t._id !== id);
+    this.render();
+    if (window.MainApp) window.MainApp.updateStats();
   },
 
-  async editTaskTitle(id, oldTitle) {
+  editTaskTitle(id, oldTitle) {
     const newTitle = prompt('Edit task description:', oldTitle);
-    if (newTitle === null) return; // Cancelled
-    
+    if (newTitle === null) return;
+
     const trimmed = newTitle.trim();
     if (!trimmed) {
       this.deleteTask(id);
       return;
     }
 
-    try {
-      const updated = await API.put(`/tasks/${id}`, { title: trimmed });
-      this.tasks = this.tasks.map(t => t._id === id ? updated : t);
-      this.render();
-    } catch (err) {
-      console.error('Failed to edit task title:', err);
-    }
+    const updated = LocalDB.Tasks.update(this._userId(), id, { title: trimmed });
+    this.tasks = this.tasks.map(t => t._id === id ? updated : t);
+    this.render();
   },
 
   calculateStats() {
-    const total = this.tasks.length;
+    const total     = this.tasks.length;
     const completed = this.tasks.filter(t => t.completed).length;
-    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const percent   = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Update values
     if (this.compCountEl) this.compCountEl.textContent = completed;
     if (this.totalCountEl) this.totalCountEl.textContent = total;
 
-    // Update progress ring stroke-dashoffset (total length is 100.53)
     if (this.progressRing) {
-      const radius = 16;
-      const circumference = 2 * Math.PI * radius; // 100.53
-      const offset = circumference - (percent / 100) * circumference;
-      this.progressRing.style.strokeDashoffset = offset;
+      const circumference = 2 * Math.PI * 16;
+      this.progressRing.style.strokeDashoffset = circumference - (percent / 100) * circumference;
     }
 
     return { total, completed, percent };
   },
 
   render() {
-    // 1. Calculate and update stats
     this.calculateStats();
 
-    // 2. Render Main Planner List
     let filtered = this.tasks.filter(task => {
-      // Filter tab check
-      if (this.currentFilter === 'active' && task.completed) return false;
+      if (this.currentFilter === 'active'    && task.completed)  return false;
       if (this.currentFilter === 'completed' && !task.completed) return false;
-      
-      // Search check
       if (this.searchQuery && !task.title.toLowerCase().includes(this.searchQuery)) return false;
-      
       return true;
     });
 
-    // Sort by: Incomplete first, then priority (high -> medium -> low)
     filtered.sort((a, b) => {
-      if (a.completed !== b.completed) {
-        return a.completed ? 1 : -1;
-      }
-      const priorityWeight = { high: 3, medium: 2, low: 1 };
-      return priorityWeight[b.priority] - priorityWeight[a.priority];
+      if (a.completed !== b.completed) return a.completed ? 1 : -1;
+      const w = { high: 3, medium: 2, low: 1 };
+      return w[b.priority] - w[a.priority];
     });
 
     if (filtered.length === 0) {
       this.tasksList.innerHTML = `
         <li class="empty-state">
           <i class="fa-regular fa-clipboard"></i>
-          <span>No tasks found. ${this.searchQuery ? 'Try a different search query.' : 'Add some tasks to begin!'}</span>
-        </li>
-      `;
+          <span>No tasks found. ${this.searchQuery ? 'Try a different search.' : 'Add some tasks to begin!'}</span>
+        </li>`;
     } else {
       this.tasksList.innerHTML = filtered.map(task => {
-        const dateStr = task.dueDate ? new Date(task.dueDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) : '';
+        const dateStr   = task.dueDate ? new Date(task.dueDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
         const prioEmoji = task.priority === 'high' ? '🔴' : task.priority === 'medium' ? '🟡' : '🟢';
-        
         return `
           <li class="task-item ${task.completed ? 'completed' : ''}" data-id="${task._id}">
             <div class="task-item-left">
@@ -195,44 +159,38 @@ const Planner = {
               <button class="task-action-btn edit-btn" title="Edit Task"><i class="fa-regular fa-pen-to-square"></i></button>
               <button class="task-action-btn delete-btn" title="Delete Task"><i class="fa-regular fa-trash-can"></i></button>
             </div>
-          </li>
-        `;
+          </li>`;
       }).join('');
 
-      // Bind dynamic events
-      this.tasksList.querySelectorAll('.task-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
+      this.tasksList.querySelectorAll('.task-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
           const id = e.target.closest('.task-item').dataset.id;
           this.toggleTask(id, e.target.checked);
         });
       });
-
       this.tasksList.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          const item = e.target.closest('.task-item');
-          const id = item.dataset.id;
+          const item  = e.target.closest('.task-item');
+          const id    = item.dataset.id;
           const title = item.querySelector('.task-title-text').textContent;
           this.editTaskTitle(id, title);
         });
       });
-
       this.tasksList.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          const id = e.target.closest('.task-item').dataset.id;
-          this.deleteTask(id);
+          this.deleteTask(e.target.closest('.task-item').dataset.id);
         });
       });
     }
 
-    // 3. Render Dashboard Widget List (max 4 incomplete tasks)
+    // Dashboard Widget (max 4 pending tasks)
     const dashTasks = this.tasks.filter(t => !t.completed).slice(0, 4);
     if (dashTasks.length === 0) {
       this.dashTasksList.innerHTML = `
         <li class="empty-state">
           <i class="fa-solid fa-circle-check" style="color: var(--success-color); opacity: 1;"></i>
           <span>All caught up! No pending tasks.</span>
-        </li>
-      `;
+        </li>`;
     } else {
       this.dashTasksList.innerHTML = dashTasks.map(task => `
         <li class="task-summary-item" data-id="${task._id}">
@@ -241,12 +199,10 @@ const Planner = {
             <span>${this.escapeHTML(task.title)}</span>
           </div>
           <span class="prio-badge prio-${task.priority}">${task.priority}</span>
-        </li>
-      `).join('');
+        </li>`).join('');
 
-      // Bind Quick Checks
-      this.dashTasksList.querySelectorAll('.task-quick-check').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
+      this.dashTasksList.querySelectorAll('.task-quick-check').forEach(cb => {
+        cb.addEventListener('change', (e) => {
           const id = e.target.closest('.task-summary-item').dataset.id;
           this.toggleTask(id, e.target.checked);
         });
